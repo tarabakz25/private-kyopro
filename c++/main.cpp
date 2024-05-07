@@ -7,6 +7,85 @@ vector<int> nukigataSize = {1, 2, 4, 8, 16, 32, 64, 128, 256};
 map<int, vector<vector<int>>> nukigata;
 
 
+void leftKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
+{
+    for(int i = y; i < nukigata[nukigataNum].size(); i++)
+    {
+        for(int j = x; j < nukigata[nukigataNum].size(); j++)
+        {
+            if(nukigata[nukigataNum][i][j] == 1){
+                int n = j;
+                int nukiNum = board[i][j];
+                while(n < board.size())
+                {
+                    if(n == board.size()-1) board[i][n] = nukiNum;
+                    else board[i][n] = board[i][n+1];
+                    n ++;
+                }
+            }
+        }
+    }
+}
+
+void rightKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
+{
+    for(int i = y; i < nukigata[nukigataNum].size(); i++)
+    {
+        for(int j = x; j < nukigata[nukigataNum].size(); j++)
+        {
+            if(nukigata[nukigataNum][i][j] == 1){
+                int n = j;
+                int nukiNum = board[i][j];
+                while(n >= 0)
+                {
+                    if(n == 0) board[i][n] = nukiNum;
+                    else board[i][n] = board[i][n-1];
+                    n --;
+                }
+            }
+        }
+    }
+}
+
+void upKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
+{
+    for(int i = y; i < nukigata[nukigataNum].size(); i++)
+    {
+        for(int j = x; j < nukigata[nukigataNum].size(); j++)
+        {
+            if(nukigata[nukigataNum][i][j] == 1){
+                int n = i;
+                int nukiNum = board[i][j];
+                while(n >= 0)
+                {
+                    if(n == 0) board[n][j] = nukiNum;
+                    else board[n][j] = board[n-1][j];
+                    n --;
+                }
+            }
+        }
+    }
+}
+
+void downKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
+{
+    for(int i = y; i < nukigata[nukigataNum].size(); i++)
+    {
+        for(int j = x; j < nukigata[nukigataNum].size(); j++)
+        {
+            if(nukigata[nukigataNum][i][j] == 1){
+                int n = i;
+                int nukiNum = board[i][j];
+                while(n < board.size())
+                {
+                    if(n == board.size()-1) board[n][j] = nukiNum;
+                    else board[n][j] = board[n+1][j];
+                    n ++;
+                }
+            }
+        }
+    }
+}
 // 文字列からベクトルに変換する関数
 vector<int> stringToVector(const string& str) {
     vector<int> row;
@@ -32,14 +111,13 @@ int loadBoard(const json& jobj, vector<vector<int>>& startBoard, vector<vector<i
 // JSONから抜き型を読み込む関数
 int generateNukigata(const json& jobj) 
 {
-    for(const auto& pattern : jobj["general"]["patterns"]) 
-    {
-        int patternId = pattern["p"];
+    for (const auto& pattern : jobj["general"]["patterns"]) {
+        int index = pattern["p"];
         vector<vector<int>> patternCells;
         for (const auto& line : pattern["cells"]) {
             patternCells.push_back(stringToVector(line.get<string>()));
         }
-        nukigata[patternId] = patternCells;
+        nukigata[index] = patternCells;
     }
     return 0;
 }
@@ -82,7 +160,8 @@ double calculateMatchRate(const vector<vector<int>>& startBoard, const vector<ve
     return (double)matchCount / totalElements * 100.0;
 }
 
-int main() {
+int main() 
+{
     //抜き型生成
     nukigata[0] = {{1}};
     int count = 1;
@@ -121,22 +200,78 @@ int main() {
         return -1;
     }
 
-    //while (calculateMatchRate(startBoard, goalBoard) < 100.0) {
-        system("clear");
-        printBoard(startBoard, goalBoard, true);
-        cout << "一致率: " << calculateMatchRate(startBoard, goalBoard) << " %" << endl;
-    //}
 
-    for(int n = 0; n < nukigata.size(); n++)
+    system("clear");
+    printBoard(startBoard, goalBoard, true);
+    cout << "一致率: " << calculateMatchRate(startBoard, goalBoard) << " %" << endl;
+   
+
+    //次から探索アルゴリズムの開始
+    vector<vector<int>> board = startBoard;
+    vector<vector<int>> tmpBoard = board;
+
+    while(calculateMatchRate(startBoard, goalBoard) < 100.0)
     {
-        cout << n << " : " << endl;
-        for(int i = 0; i < nukigata[n].size(); i++)
+        map<int, tuple<double, int, int, int>> scores;
+        int count = 0;
+        for(auto& nukigataNum : nukigata)
         {
-            for(int j = 0; j < nukigata[n].size(); j++)
+            for(int i = 0; i < board.size(); i++)
             {
-                cout << nukigata[n][i][j] << " ";
+                for(int j = 0; j < board[i].size(); j++)
+                {
+                    for(int action = 0; action < 4; action++)
+                    {
+                        double matchRate;
+                        switch (action)
+                        {
+                        case 0://上
+                            upKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
+                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
+                            scores[count] = make_tuple(matchRate, i, j, action);
+                            break;
+                        case 1:
+                            downKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
+                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
+                            scores[count] = make_tuple(matchRate, i, j, action);;
+                            break;
+                        case 2:
+                            leftKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
+                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
+                            scores[count] = make_tuple(matchRate, i, j, action);;
+                            break;
+                        case 3:
+                            rightKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
+                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
+                            scores[count] = make_tuple(matchRate, i, j, action);
+                            break;
+                        default:
+                            cout << "予測されてないERROR" << endl;
+                        }
+                        count ++;
+                    }   
+                }
             }
-            cout << endl;
         }
+
+        double maxScore = -1;
+        tuple<double, int, int, int> maxData;
+        for (const auto& entry : scores) 
+        {
+            double currentScore = get<2>(entry.second);
+            if (currentScore > maxScore) {
+            maxScore = currentScore;
+            maxData = entry.second;
+            }
+        }
+        cout << "最大のスコア: " << maxScore << "\n";
+        cout << "関連する値: " << get<0>(maxData) << ", " << get<1>(maxData) << endl;
+
+        printBoard(tmpBoard, goalBoard, true);
+        cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
+
+        break;
     }
+
+    return 0;
 }
