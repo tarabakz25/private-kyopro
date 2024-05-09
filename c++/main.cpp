@@ -162,6 +162,10 @@ double calculateMatchRate(const vector<vector<int>>& startBoard, const vector<ve
 
 int main() 
 {
+    //時間計測
+    chrono::system_clock::time_point start, end;
+    start = chrono::system_clock::now();
+
     //抜き型生成
     nukigata[0] = {{1}};
     int count = 1;
@@ -237,17 +241,17 @@ int main()
                             matchRate = calculateMatchRate(tmpBoard, goalBoard);
                             scores[count] = make_tuple(matchRate, i, j, action);
                             break;
-                        case 1:
+                        case 1://下
                             downKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
                             matchRate = calculateMatchRate(tmpBoard, goalBoard);
                             scores[count] = make_tuple(matchRate, i, j, action);;
                             break;
-                        case 2:
+                        case 2://左
                             leftKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
                             matchRate = calculateMatchRate(tmpBoard, goalBoard);
                             scores[count] = make_tuple(matchRate, i, j, action);;
                             break;
-                        case 3:
+                        case 3://右
                             rightKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
                             matchRate = calculateMatchRate(tmpBoard, goalBoard);
                             scores[count] = make_tuple(matchRate, i, j, action);
@@ -277,7 +281,13 @@ int main()
         printBoard(tmpBoard, goalBoard, true);
         cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
         system("clear");
+
+        if(count == 100) break;
     }
 
+    end = chrono::system_clock::now();
+    double time = static_cast<double>(chrono::duration_cast<chrono::microseconds>(end - start).count() / 1000.0);
+
+    cout << time << "ms" << endl;
     return 0;
 }
