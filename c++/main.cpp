@@ -191,6 +191,7 @@ int main()
         }
     }
 
+    //JSONファイルの読み込み
     ifstream ifs("./sample.json");
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     json jobj = json::parse(str);
@@ -199,6 +200,9 @@ int main()
         cout << "Failed to load configurations." << endl;
         return -1;
     }
+    int boardSide = jobj["board"]["width"].get<int>();
+    int boardWarp = jobj["board"]["height"].get<int>();
+
 
 
     system("clear");
@@ -220,6 +224,9 @@ int main()
             {
                 for(int j = 0; j < board[i].size(); j++)
                 {
+                    if(boardSide <= nukigataNum.first + j || boardWarp <= nukigataNum.first + i){
+                        break;
+                    }
                     for(int action = 0; action < 4; action++)
                     {
                         double matchRate;
@@ -249,7 +256,7 @@ int main()
                             cout << "予測されてないERROR" << endl;
                         }
                         count ++;
-                    }   
+                    }
                 }
             }
         }
@@ -269,8 +276,7 @@ int main()
 
         printBoard(tmpBoard, goalBoard, true);
         cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
-
-        break;
+        system("clear");
     }
 
     return 0;
