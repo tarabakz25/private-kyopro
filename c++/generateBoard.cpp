@@ -39,8 +39,8 @@ void printBoardJson(const std::vector<std::string>& start, const std::vector<std
 
 int main() {
     srand(static_cast<unsigned int>(time(0))); // 乱数の初期化
-    const int width = 64;
-    const int height = 64;
+    const int width = 16;
+    const int height = 16;
 
     std::vector<std::string> start = generateRandomBoard(width, height);
     std::vector<std::string> goal = generateRandomBoard(width, height);
