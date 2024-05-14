@@ -119,7 +119,7 @@ int main()
     start = chrono::system_clock::now();
 
     //JSONファイルの読み込み
-    ifstream ifs("./sample.json");
+    ifstream ifs("./sample2.json");
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     json jobj = json::parse(str);
     vector<vector<int>> startBoard, goalBoard;
@@ -169,12 +169,12 @@ int main()
         board = tmpBoard;
 
         system("clear");
-        printBoard(tmpBoard, goalBoard, true);
-        cout << "動かした所: " << get<1>(maxData) << ", " << get<2>(maxData) << endl;
+        //printBoard(tmpBoard, goalBoard, true);
+        cout << "動かした所: " << get<1>(maxData) << ", " << get<2>(maxData) << ", 動かし方: " << get<3>(maxData) << endl;
         cout << "手数: " << count << endl;
         cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
 
-        if(count == 1000) break;
+        if(count == 500) break;
         else count ++;
     }
 
