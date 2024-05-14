@@ -3,89 +3,40 @@
 using namespace std;
 using json = nlohmann::json;
 
-vector<int> nukigataSize = {1, 2, 4, 8, 16, 32, 64, 128, 256};
-map<int, vector<vector<int>>> nukigata;
 
 
-void leftKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
+void katanuki(vector<vector<int>>& tmpBoard, vector<vector<int>>& board, int i, int j, int action)
 {
-    for(int i = y; i < nukigata[nukigataNum].size(); i++)
-    {
-        for(int j = x; j < nukigata[nukigataNum].size(); j++)
-        {
-            if(nukigata[nukigataNum][i][j] == 1){
-                int n = j;
-                int nukiNum = board[i][j];
-                while(n < board.size())
-                {
-                    if(n == board.size()-1) board[i][n] = nukiNum;
-                    else board[i][n] = board[i][n+1];
-                    n ++;
-                }
-            }
+    if(action == 0 && i != board.size() - 1){//upKatanuki
+        int temp = board[i][j];
+        for(int k = i ;k < board.size()-1; k++){
+            tmpBoard[k][j] = tmpBoard[k + 1][j];
         }
+        tmpBoard[board.size() - 1][j] = temp;
+    }
+    else if(action == 1 && i != 0){//downKatanuki
+        int temp = board[i][j];
+        for(int k = i; k > 0; k--){
+            tmpBoard[k][j] = tmpBoard[k - 1][j];
+        }
+        tmpBoard[0][j] = temp;
+    }
+    else if(action == 2 && j != board[i].size() - 1){//leftKatanuki
+        int temp = board[i][j];
+        for(int k = j; k < board.size()-1; k++){
+            tmpBoard[i][k] = tmpBoard[i][k + 1];
+        }
+        tmpBoard[i][board[i].size() - 1] = temp;
+    }
+    else if(action == 3 && j != 0){//rightKatanuki
+        int temp = board[i][j];
+        for(int k = j; k > 0; k--){
+            tmpBoard[i][k] = tmpBoard[i][k - 1];
+        }
+        tmpBoard[i][0] = temp;
     }
 }
 
-void rightKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
-{
-    for(int i = y; i < nukigata[nukigataNum].size(); i++)
-    {
-        for(int j = x; j < nukigata[nukigataNum].size(); j++)
-        {
-            if(nukigata[nukigataNum][i][j] == 1){
-                int n = j;
-                int nukiNum = board[i][j];
-                while(n >= 0)
-                {
-                    if(n == 0) board[i][n] = nukiNum;
-                    else board[i][n] = board[i][n-1];
-                    n --;
-                }
-            }
-        }
-    }
-}
-
-void upKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
-{
-    for(int i = y; i < nukigata[nukigataNum].size(); i++)
-    {
-        for(int j = x; j < nukigata[nukigataNum].size(); j++)
-        {
-            if(nukigata[nukigataNum][i][j] == 1){
-                int n = i;
-                int nukiNum = board[i][j];
-                while(n >= 0)
-                {
-                    if(n == 0) board[n][j] = nukiNum;
-                    else board[n][j] = board[n-1][j];
-                    n --;
-                }
-            }
-        }
-    }
-}
-
-void downKatanuki(int nukigataNum, vector<vector<int>>& board, int y, int x, map<int, vector<vector<int>>>& nukigata)
-{
-    for(int i = y; i < nukigata[nukigataNum].size(); i++)
-    {
-        for(int j = x; j < nukigata[nukigataNum].size(); j++)
-        {
-            if(nukigata[nukigataNum][i][j] == 1){
-                int n = i;
-                int nukiNum = board[i][j];
-                while(n < board.size())
-                {
-                    if(n == board.size()-1) board[n][j] = nukiNum;
-                    else board[n][j] = board[n+1][j];
-                    n ++;
-                }
-            }
-        }
-    }
-}
 // 文字列からベクトルに変換する関数
 vector<int> stringToVector(const string& str) {
     vector<int> row;
@@ -109,18 +60,18 @@ int loadBoard(const json& jobj, vector<vector<int>>& startBoard, vector<vector<i
 }
 
 // JSONから抜き型を読み込む関数
-int generateNukigata(const json& jobj) 
-{
-    for (const auto& pattern : jobj["general"]["patterns"]) {
-        int index = pattern["p"];
-        vector<vector<int>> patternCells;
-        for (const auto& line : pattern["cells"]) {
-            patternCells.push_back(stringToVector(line.get<string>()));
-        }
-        nukigata[index] = patternCells;
-    }
-    return 0;
-}
+// int generateNukigata(const json& jobj) 
+// {
+//     for (const auto& pattern : jobj["general"]["patterns"]) {
+//         int index = pattern["p"];
+//         vector<vector<int>> patternCells;
+//         for (const auto& line : pattern["cells"]) {
+//             patternCells.push_back(stringToVector(line.get<string>()));
+//         }
+//         nukigata[index] = patternCells;
+//     }
+//     return 0;
+// }
 
 // ボードを表示する関数
 void printBoard(const vector<vector<int>>& board1, const vector<vector<int>>& board2, bool action) {
@@ -146,7 +97,8 @@ void printBoard(const vector<vector<int>>& board1, const vector<vector<int>>& bo
 }
 
 // 一致率を計算する関数
-double calculateMatchRate(const vector<vector<int>>& startBoard, const vector<vector<int>>& goalBoard) {
+double calculateMatchRate(const vector<vector<int>>& startBoard, const vector<vector<int>>& goalBoard) 
+{
     int totalElements = 0;
     int matchCount = 0;
     for (int i = 0; i < startBoard.size(); i++) {
@@ -166,48 +118,17 @@ int main()
     chrono::system_clock::time_point start, end;
     start = chrono::system_clock::now();
 
-    //抜き型生成
-    nukigata[0] = {{1}};
-    int count = 1;
-    for(int i = 1; i < nukigataSize.size(); i++)
-    {
-        for(int n = 0; n < 3; n++)
-        {
-            vector<vector<int>> tmp(nukigataSize[i], vector<int>(nukigataSize[i], 0));
-            for(int j = 0; j < nukigataSize[i]; j++)
-            {
-                for(int k = 0; k < nukigataSize[i]; k++)
-                {
-                    if(n == 0){
-                        tmp[j][k] = 1;
-                    }
-                    if(n == 1){
-                        if(j % 2 == 0) tmp[j][k] = 1;
-                    }
-                    if(n == 2){
-                        if(k == 0) tmp[j][k] = 1;
-                        if(k > 0 && tmp[j][k-1] == 0) tmp[j][k] = 1;
-                    }
-                }
-            }
-            nukigata[count] = tmp;
-            count ++;
-        }
-    }
-
     //JSONファイルの読み込み
     ifstream ifs("./sample.json");
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     json jobj = json::parse(str);
     vector<vector<int>> startBoard, goalBoard;
-    if (loadBoard(jobj, startBoard, goalBoard) != 0 || generateNukigata(jobj) != 0) {
-        cout << "Failed to load configurations." << endl;
-        return -1;
-    }
+    loadBoard(jobj, startBoard, goalBoard);
     int boardSide = jobj["board"]["width"].get<int>();
     int boardWarp = jobj["board"]["height"].get<int>();
 
-
+    //抜き型
+    vector<int> nukigata = {1};
 
     system("clear");
     printBoard(startBoard, goalBoard, true);
@@ -217,72 +138,44 @@ int main()
     //次から探索アルゴリズムの開始
     vector<vector<int>> board = startBoard;
     vector<vector<int>> tmpBoard = board;
+    int count = 1;
 
     while(calculateMatchRate(startBoard, goalBoard) < 100.0)
     {
-        map<int, tuple<double, int, int, int>> scores;
-        int count = 0;
-        for(auto& nukigataNum : nukigata)
-        {
-            for(int i = 0; i < board.size(); i++)
-            {
-                for(int j = 0; j < board[i].size(); j++)
-                {
-                    if(boardSide <= nukigataNum.first + j || boardWarp <= nukigataNum.first + i){
-                        break;
-                    }
-                    for(int action = 0; action < 4; action++)
-                    {
-                        double matchRate;
-                        switch (action)
-                        {
-                        case 0://上
-                            upKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
-                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
-                            scores[count] = make_tuple(matchRate, i, j, action);
-                            break;
-                        case 1://下
-                            downKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
-                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
-                            scores[count] = make_tuple(matchRate, i, j, action);;
-                            break;
-                        case 2://左
-                            leftKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
-                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
-                            scores[count] = make_tuple(matchRate, i, j, action);;
-                            break;
-                        case 3://右
-                            rightKatanuki(nukigataNum.first, tmpBoard, i, j, nukigata);
-                            matchRate = calculateMatchRate(tmpBoard, goalBoard);
-                            scores[count] = make_tuple(matchRate, i, j, action);
-                            break;
-                        default:
-                            cout << "予測されてないERROR" << endl;
-                        }
-                        count ++;
-                    }
+        vector<tuple<double, int, int, int>> scores;
+        int boardCount = 0;
+
+        for(int i = 0; i < board.size(); i++){
+            for(int j = 0; j < board[i].size(); j++){
+                for(int k = 0; k < 4; k++){
+                    katanuki(tmpBoard, board, i, j, k);
+                    scores.push_back(make_tuple(calculateMatchRate(tmpBoard, goalBoard), i, j, k));
+                    tmpBoard = board;
+                    boardCount++;
                 }
             }
         }
+        
+        sort(scores.begin(), scores.end(), [](const tuple<double, int, int, int>& a, const tuple<double, int, int, int>& b) {
+            return get<0>(a) < get<0>(b);
+        });
 
-        double maxScore = -1;
+        
         tuple<double, int, int, int> maxData;
-        for (const auto& entry : scores) 
-        {
-            double currentScore = get<2>(entry.second);
-            if (currentScore > maxScore) {
-            maxScore = currentScore;
-            maxData = entry.second;
-            }
-        }
-        cout << "最大のスコア: " << maxScore << "\n";
-        cout << "関連する値: " << get<0>(maxData) << ", " << get<1>(maxData) << endl;
+        maxData = scores[scores.size()-1];
 
-        printBoard(tmpBoard, goalBoard, true);
-        cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
+        katanuki(tmpBoard, board, get<1>(maxData), get<2>(maxData), get<3>(maxData));
+        double maxScore = calculateMatchRate(tmpBoard, goalBoard);
+        board = tmpBoard;
+
         system("clear");
+        printBoard(tmpBoard, goalBoard, true);
+        cout << "動かした所: " << get<1>(maxData) << ", " << get<2>(maxData) << endl;
+        cout << "手数: " << count << endl;
+        cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
 
-        if(count == 100) break;
+        if(count == 1000) break;
+        else count ++;
     }
 
     end = chrono::system_clock::now();
