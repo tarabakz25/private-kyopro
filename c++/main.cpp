@@ -139,19 +139,36 @@ int main()
     vector<vector<int>> board = startBoard;
     vector<vector<int>> tmpBoard = board;
     int count = 1;
+    bool scoreFlag = false;
+    double lastScore;
 
     while(calculateMatchRate(startBoard, goalBoard) < 100.0)
     {
         vector<tuple<double, int, int, int>> scores;
         int boardCount = 0;
+               
 
-        for(int i = 0; i < board.size(); i++){
-            for(int j = 0; j < board[i].size(); j++){
-                for(int k = 0; k < 4; k++){
-                    katanuki(tmpBoard, board, i, j, k);
-                    scores.push_back(make_tuple(calculateMatchRate(tmpBoard, goalBoard), i, j, k));
-                    tmpBoard = board;
-                    boardCount++;
+        if(scoreFlag){
+            for(int i = 0; i < board.size(); i++){
+                for(int j = 0; j < board[i].size(); j++){
+                    if(tmpBoard[i][j] == goalBoard[i][j]){
+                        if(i == 0) katanuki(tmpBoard, board, i, j, 0);
+                        else if(i == tmpBoard.size() - 1) katanuki(tmpBoard, board, i, j, 1);
+                        else if(j == 0) katanuki(tmpBoard, board, i, j, 2);
+                        else katanuki(tmpBoard, board, i, j, 3);
+                    }
+                }
+            }
+        }
+        else{
+            for(int i = 0; i < board.size(); i++){
+                for(int j = 0; j < board[i].size(); j++){
+                   for(int k = 0; k < 4; k++){
+                        katanuki(tmpBoard, board, i, j, k);
+                        scores.push_back(make_tuple(calculateMatchRate(tmpBoard, goalBoard), i, j, k));
+                        tmpBoard = board;
+                        boardCount++;
+                    }
                 }
             }
         }
@@ -168,19 +185,22 @@ int main()
         double maxScore = calculateMatchRate(tmpBoard, goalBoard);
         board = tmpBoard;
 
+
+        if(maxScore == lastScore){
+            katanuki(tmpBoard, goalBoard, get<2>(maxData), get<2>(maxData), get<3>(maxData) + 1);
+        }
+        double lastScore = maxScore;
+
+
         system("clear");
-        //printBoard(tmpBoard, goalBoard, true);
+        printBoard(tmpBoard, goalBoard, true);
         cout << "動かした所: " << get<1>(maxData) << ", " << get<2>(maxData) << ", 動かし方: " << get<3>(maxData) << endl;
-        cout << "手数: " << count << endl;
+        cout << "手数: " << count << " Flag: " << scoreFlag << endl;
         cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
+        cout << "time: " << static_cast<double>(chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - start).count() / 1000.0) << "ms" << endl;
 
         if(count == 500) break;
         else count ++;
     }
-
-    end = chrono::system_clock::now();
-    double time = static_cast<double>(chrono::duration_cast<chrono::microseconds>(end - start).count() / 1000.0);
-
-    cout << time << "ms" << endl;
     return 0;
 }
