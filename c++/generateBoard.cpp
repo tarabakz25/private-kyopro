@@ -1,50 +1,54 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <cstdlib>
-#include <ctime>
+#include <algorithm>
+#include <random>
+#include "json.hpp"
 
-// ボードをランダムに生成する関数
-std::vector<std::string> generateRandomBoard(int width, int height) {
-    std::vector<std::string> board(height);
-    for (int i = 0; i < height; ++i) {
-        board[i].resize(width);
-        for (int j = 0; j < width; ++j) {
-            board[i][j] = '0' + rand() % 4; // 0から3のランダム値
-        }
+// ボードのサイズを決定し、そのサイズのボードを生成する関数
+std::vector<std::string> generate_board(int size) {
+    std::random_device rd;
+    std::mt19937 g(rd());
+    
+    int num_elements = size * size;
+    std::vector<int> elements(num_elements);
+    int value = 0;
+    for (int i = 0; i < num_elements; i++) {
+        elements[i] = value;
+        value = (value + 1) % 4;  // 0から3の値を循環
     }
+    
+    // ボードをシャッフル
+    std::shuffle(elements.begin(), elements.end(), g);
+    
+    // ボードデータを文字列の形式で格納
+    std::vector<std::string> board(size);
+    for (int i = 0; i < size; i++) {
+        std::string row;
+        for (int j = 0; j < size; j++) {
+            row += std::to_string(elements[i * size + j]);
+        }
+        board[i] = row;
+    }
+    
     return board;
 }
 
-// ボードをJSON形式で出力する関数
-void printBoardJson(const std::vector<std::string>& start, const std::vector<std::string>& goal) {
-    int height = start.size();
-    int width = start[0].size();
-
-    std::cout << "\"board\": {\n";
-    std::cout << "  \"width\": " << width << ",\n";
-    std::cout << "  \"height\": " << height << ",\n";
-    std::cout << "  \"start\": [\n";
-    for (int i = 0; i < height; ++i) {
-        std::cout << "    \"" << start[i] << "\"" << (i < height - 1 ? "," : "") << "\n";
-    }
-    std::cout << "  ],\n";
-    std::cout << "  \"goal\": [\n";
-    for (int i = 0; i < height; ++i) {
-        std::cout << "    \"" << goal[i] << "\"" << (i < height - 1 ? "," : "") << "\n";
-    }
-    std::cout << "  ]\n";
-    std::cout << "}\n";
-}
-
 int main() {
-    srand(static_cast<unsigned int>(time(0))); // 乱数の初期化
-    const int width = 16;
-    const int height = 16;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::uniform_int_distribution<> size_dist(16, 128);
+    int size = size_dist(g);  // 両方のボードのサイズを一致させる
 
-    std::vector<std::string> start = generateRandomBoard(width, height);
-    std::vector<std::string> goal = generateRandomBoard(width, height);
+    auto start_board = generate_board(size);
+    auto goal_board = generate_board(size);
 
-    printBoardJson(start, goal);
+    nlohmann::json json_output;
+    json_output["board"]["width"] = size;
+    json_output["board"]["height"] = size;
+    json_output["board"]["start"] = start_board;
+    json_output["board"]["goal"] = goal_board;
+
+    std::cout << json_output.dump(4) << std::endl;
+
     return 0;
 }

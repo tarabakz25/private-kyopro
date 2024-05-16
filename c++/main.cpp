@@ -4,36 +4,20 @@ using namespace std;
 using json = nlohmann::json;
 
 
-
 void katanuki(vector<vector<int>>& tmpBoard, vector<vector<int>>& board, int i, int j, int action)
 {
+    int temp = tmpBoard[i][j];
     if(action == 0 && i != board.size() - 1){//upKatanuki
-        int temp = board[i][j];
         for(int k = i ;k < board.size()-1; k++){
             tmpBoard[k][j] = tmpBoard[k + 1][j];
         }
         tmpBoard[board.size() - 1][j] = temp;
     }
-    else if(action == 1 && i != 0){//downKatanuki
-        int temp = board[i][j];
-        for(int k = i; k > 0; k--){
-            tmpBoard[k][j] = tmpBoard[k - 1][j];
-        }
-        tmpBoard[0][j] = temp;
-    }
-    else if(action == 2 && j != board[i].size() - 1){//leftKatanuki
-        int temp = board[i][j];
-        for(int k = j; k < board.size()-1; k++){
+    else if(action == 1 && j != board[i].size() - 1){//leftKatanuki
+        for(int k = j; k < board[i].size()-1; k++){
             tmpBoard[i][k] = tmpBoard[i][k + 1];
         }
         tmpBoard[i][board[i].size() - 1] = temp;
-    }
-    else if(action == 3 && j != 0){//rightKatanuki
-        int temp = board[i][j];
-        for(int k = j; k > 0; k--){
-            tmpBoard[i][k] = tmpBoard[i][k - 1];
-        }
-        tmpBoard[i][0] = temp;
     }
 }
 
@@ -119,7 +103,7 @@ int main()
     start = chrono::system_clock::now();
 
     //JSONファイルの読み込み
-    ifstream ifs("./sample3.json");
+    ifstream ifs("./sample2.json");
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     json jobj = json::parse(str);
     vector<vector<int>> startBoard, goalBoard;
@@ -139,68 +123,59 @@ int main()
     vector<vector<int>> board = startBoard;
     vector<vector<int>> tmpBoard = board;
     int count = 1;
-    bool scoreFlag = false;
-    double lastScore;
+    int breakPoint = 2000;
+    bool flag = false;
+    double lastScore = 0;
+    int breakCount = 0;
+    double totalMaxScore = 0;
+    double maxScore = 0;
 
-    while(calculateMatchRate(startBoard, goalBoard) < 100.0)
+    while(totalMaxScore != 100)
     {
-        vector<tuple<double, int, int, int>> scores;
-        int boardCount = 0;
-               
-
-        if(scoreFlag){
-            for(int i = 0; i < board.size(); i++){
-                for(int j = 0; j < board[i].size(); j++){
-                    if(tmpBoard[i][j] == goalBoard[i][j]){
-                        if(i == 0) katanuki(tmpBoard, board, i, j, 0);
-                        else if(i == tmpBoard.size() - 1) katanuki(tmpBoard, board, i, j, 1);
-                        else if(j == 0) katanuki(tmpBoard, board, i, j, 2);
-                        else katanuki(tmpBoard, board, i, j, 3);
-                    }
-                }
-            }
-        }
-        else{
-            for(int i = 0; i < board.size(); i++){
-                for(int j = 0; j < board[i].size(); j++){
-                   for(int k = 0; k < 4; k++){
-                        katanuki(tmpBoard, board, i, j, k);
-                        scores.push_back(make_tuple(calculateMatchRate(tmpBoard, goalBoard), i, j, k));
-                        tmpBoard = board;
-                        boardCount++;
-                    }
-                }
-            }
-        }
+    for(int i = 0; i < board.size()-1; i++)
+    {
+        int j = 0;       
         
-        sort(scores.begin(), scores.end(), [](const tuple<double, int, int, int>& a, const tuple<double, int, int, int>& b) {
-            return get<0>(a) < get<0>(b);
-        });
+        while(j < board[i].size()){
+            
+            if(i != board.size()-1){
+                katanuki(tmpBoard, board, i, j, 0);
+                count ++;
+            }
+            if(j != board[i].size()-1){
+                katanuki(tmpBoard, board, i, j, 1);
+                count ++;
+            }
 
+            for(int k = i; k < board.size()-1; k++){
+                katanuki(tmpBoard, board, k+1, 0, 1);
+                count ++;
+            }
+
+
+            
+            maxScore = calculateMatchRate(tmpBoard, goalBoard);
+
+
+            if(tmpBoard[i][j] == goalBoard[i][j]) j++;
+
+            system("clear");
+            printBoard(tmpBoard, goalBoard, true);
+            cout << "動かした所: " << i << ", " << j << ", 動かし方: " << 0 << " 手数: " << count << endl;
+            totalMaxScore = max(maxScore, totalMaxScore);
+            cout << "一致率: " << maxScore << " %" << endl;
+            cout << "最大一致率:" << totalMaxScore << " %" << endl;
+            cout << "time: " << static_cast<double>(chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - start).count() / 1000.0) << "ms" << endl;
+            
+            //count ++;
+            //this_thread::sleep_for(chrono::milliseconds(500));
+            //if(count >= breakPoint) break;
+        }  
         
-        tuple<double, int, int, int> maxData;
-        maxData = scores[scores.size()-1];
-
-        katanuki(tmpBoard, board, get<1>(maxData), get<2>(maxData), get<3>(maxData));
-        double maxScore = calculateMatchRate(tmpBoard, goalBoard);
-        board = tmpBoard;
-
-
-        if(maxScore == lastScore){
-            katanuki(tmpBoard, goalBoard, get<2>(maxData), get<2>(maxData), get<3>(maxData) + 1);
-        }
-        double lastScore = maxScore;
-
-
-        system("clear");
-        printBoard(tmpBoard, goalBoard, true);
-        cout << "動かした所: " << get<1>(maxData) << ", " << get<2>(maxData) << ", 動かし方: " << get<3>(maxData) << endl;
-        cout << "手数: " << count << " Flag: " << scoreFlag << endl;
-        cout << "一致率: " << calculateMatchRate(tmpBoard, goalBoard) << " %" << endl;
-        cout << "time: " << static_cast<double>(chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - start).count() / 1000.0) << "ms" << endl;
-
-        if(count == 500) break;
-        else count ++;
+        //if(count >= breakPoint) break;
     }
+    //if(count >= breakPoint) break;
+    }
+
     return 0;
 }
