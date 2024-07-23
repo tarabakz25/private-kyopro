@@ -120,62 +120,36 @@ int main()
    
 
     //次から探索アルゴリズムの開始
-    vector<vector<int>> board = startBoard;
-    vector<vector<int>> tmpBoard = board;
-    int count = 1;
+    vector<vector<int>> tmpBoard = startBoard;
+
     int breakPoint = 2000;
     bool flag = false;
     double lastScore = 0;
-    int breakCount = 0;
+    int breakFlag = false;
     double totalMaxScore = 0;
     double maxScore = 0;
+    pair<int, int> shortestMatch;
 
-    while(totalMaxScore != 100)
-    {
-    for(int i = 0; i < board.size()-1; i++)
-    {
-        int j = 0;       
-        
-        while(j < board[i].size()){
-            
-            if(i != board.size()-1){
-                katanuki(tmpBoard, board, i, j, 0);
-                count ++;
+    while(totalMaxScore != 100){
+        for(int i = 0; i < startBoard.size(); i++){
+            for(int j = 0; j < startBoard[i].size(); j++){
+                for(int k = 0; k < startBoard.size(); k++){
+                    for(int ki = i+1; ki < i + 2; k++){
+                        if(tmpBoard[i][j] == goalBoard[ki][j]){
+                            shortestMatch = {ki, j};
+                            breakFlag = true;
+                            break;
+                        }
+                    }
+                    if(breakFlag){
+                        break;
+                    }
+                }
+            if(breakFlag){
+                break;
             }
-            if(j != board[i].size()-1){
-                katanuki(tmpBoard, board, i, j, 1);
-                count ++;
-            }
-
-            for(int k = i; k < board.size()-1; k++){
-                katanuki(tmpBoard, board, k+1, 0, 1);
-                count ++;
-            }
-
-
-            
-            maxScore = calculateMatchRate(tmpBoard, goalBoard);
-
-
-            if(tmpBoard[i][j] == goalBoard[i][j]) j++;
-
-            system("clear");
-            printBoard(tmpBoard, goalBoard, true);
-            cout << "動かした所: " << i << ", " << j << ", 動かし方: " << 0 << " 手数: " << count << endl;
-            totalMaxScore = max(maxScore, totalMaxScore);
-            cout << "一致率: " << maxScore << " %" << endl;
-            cout << "最大一致率:" << totalMaxScore << " %" << endl;
-            cout << "time: " << static_cast<double>(chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - start).count() / 1000.0) << "ms" << endl;
-            
-            //count ++;
-            //this_thread::sleep_for(chrono::milliseconds(500));
-            //if(count >= breakPoint) break;
-        }  
-        
-        //if(count >= breakPoint) break;
+        }
     }
-    //if(count >= breakPoint) break;
     }
-
     return 0;
 }
