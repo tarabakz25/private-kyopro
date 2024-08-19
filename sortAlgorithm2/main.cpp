@@ -79,17 +79,25 @@ int main()
             if(startB[i][j] != goalB[i][j]){
                 int si = INT_MAX;
                 int sj = INT_MAX;
+
+                bool flag1 = false;
+
+                //欲しい数の最短場所を探す。
                 rep(ki, height){
                     rep(kj, width){
                         if(startB[ki][ki] == goalB[i][j] && (ki < si && kj < sj)){
                             si = ki;
                             sj = kj;
 
-                            if(ki > si && kj > sj) break;
+                            if(ki > si && kj > sj) flag1 = true;
+
+                            if(flag1) break;
                         }
+                        if(flag1) break;
                     }
-                    
                 }
+
+                
             }
         }
     }
