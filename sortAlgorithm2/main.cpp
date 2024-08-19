@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include "json.hpp"
+
 #define rep(i, n) for(int i = 0; i < n; i++)
 
 using namespace std;
@@ -7,6 +8,29 @@ using json = nlohmann::json;
 
 /* 変数の先宣言 */
 int counter = 0;
+
+void katanuki(vector<vector<int>>& startB, vector<vector<int>>& goalB, int i, int j, int action)
+{
+    int temp = startB[i][j];
+
+    /* up */
+    if(action == 0 && i  != goalB.size() - 1){
+        for(int k = i; k < goalB.size() - 1; k ++){
+            startB[k][j] = startB[k + 1][j];
+        }
+
+        startB[goalB.size() - 1][j] = temp;
+    }
+
+    /* left */
+    if(action == 1 && j != goalB[i].size() - 1){
+        for(int k = j; k < goalB[i].size(); k ++){
+            startB[i][k] = startB[i][k + 1];
+        }
+        startB[i][goalB[i].size() - 1] = temp;
+    }
+    counter ++;
+}
 
 vector<int> stringToVector(const string& str)
 {
@@ -62,7 +86,7 @@ int main()
     chrono::system_clock::time_point start = chrono::system_clock::now();
 
     //Json読み込み
-    ifstream ifs("sample.json");
+    ifstream ifs("sample2.json");
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>()); 
     json j = json::parse(str);
     vector<vector<int>> startB, goalB;
@@ -70,34 +94,35 @@ int main()
     const int width = j["board"]["width"].get<int>();
     const int height = j["board"]["height"].get<int>();
 
+    double matchRate = calculateMatchRate(goalB, startB);
+
     //抜き型
     vector<int> {1};
 
     //ソート開始
-    rep(i, height){
-        rep(j, width){
-            if(startB[i][j] != goalB[i][j]){
-                int si = INT_MAX;
-                int sj = INT_MAX;
+    while(matchRate != 100)
+    {
+        rep(i, height){
+            rep(j, width){
+                if(startB[i][j] != goalB[i][j]){
+                    for(int ai = i; ai < height; ai++){
+                        for(int aj = i; aj < width; aj++){
+                            if(startB[ai][aj] == goalB[i][j]){
+                                while(startB[ai][j] == goalB[i][j]){
+                                    katanuki(startB, goalB, ai, j, 1);
+                                    infoPrint(startB, goalB, width, height);
+                                }
 
-                bool flag1 = false;
+                                while(startB[i][j] == goalB[i][j]){
+                                    katanuki(startB, goalB, i, j, 0);
+                                    infoPrint(startB, goalB, width, height);
+                                }
 
-                //欲しい数の最短場所を探す。
-                rep(ki, height){
-                    rep(kj, width){
-                        if(startB[ki][ki] == goalB[i][j] && (ki < si && kj < sj)){
-                            si = ki;
-                            sj = kj;
-
-                            if(ki > si && kj > sj) flag1 = true;
-
-                            if(flag1) break;
+                                break;
+                            }
                         }
-                        if(flag1) break;
                     }
                 }
-
-                
             }
         }
     }
